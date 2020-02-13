@@ -41,7 +41,7 @@ def _to_seconds(time_array):
 # pylint: disable=W0612
 def setup_platform(hass, config, add_devices, discovery_info=None):
     global ALL_DEVICES
-    
+
     devices = hass.data[MIELE_DOMAIN][DATA_DEVICES]
     for k, device in devices.items():
         device_state = device['state']
@@ -92,7 +92,7 @@ class MieleRawSensor(Entity):
     def name(self):
         """Return the name of the sensor."""
         ident = self._device['ident']
-        
+
         result = ident['deviceName']
         if len(result) == 0:
             return ident['type']['value_localized'] + ' ' + _map_key(self._key)
@@ -105,7 +105,7 @@ class MieleRawSensor(Entity):
 
         return self._device['state'][self._key]['value_raw']
 
-    async def async_update(self): 
+    async def async_update(self):
         if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
             _LOGGER.error('Miele device disappeared: {}'.format(self.device_id))
         else:
@@ -138,6 +138,10 @@ class MieleStatusSensor(MieleRawSensor):
             attributes['programPhase'] = device_state['programPhase']['value_localized']
             attributes['rawProgramPhase'] = device_state['programPhase']['value_raw']
 
+        if 'spinningSpeed' in device_state:
+            attributes['spinningSpeed'] = device_state['spinningSpeed']['value_localized']
+            attributes['rawDryingStep'] = device_state['spinningSpeed']['value_raw']
+
         if 'dryingStep' in device_state:
             attributes['dryingStep'] = device_state['dryingStep']['value_localized']
             attributes['rawDryingStep'] = device_state['dryingStep']['value_raw']
@@ -152,7 +156,7 @@ class MieleStatusSensor(MieleRawSensor):
             remainingTime = _to_seconds(device_state['remainingTime'])
             elapsedTime = _to_seconds(device_state['elapsedTime'])
 
-            # Calculate progress            
+            # Calculate progress
             if (elapsedTime + remainingTime) == 0:
                 attributes['progress'] = None
             else:
@@ -203,7 +207,7 @@ class MieleTemperatureSensor(Entity):
     def name(self):
         """Return the name of the sensor."""
         ident = self._device['ident']
-        
+
         result = ident['deviceName']
         if len(result) == 0:
             return '{} {} {}'.format(ident['type']['value_localized'], _map_key(self._key), self._index)
@@ -231,7 +235,7 @@ class MieleTemperatureSensor(Entity):
     def device_class(self):
         return "temperature"
 
-    async def async_update(self): 
+    async def async_update(self):
         if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
             _LOGGER.error(' Miele device disappeared: {}'.format(self.device_id))
         else:
